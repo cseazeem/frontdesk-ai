@@ -1,5 +1,7 @@
 # FrontDesk AI
 
+**Live demo:** https://frontdesk-ai-fyx2.onrender.com (choose *WebSocket* in the top-right menu, then Connect)
+
 A voice AI receptionist for a US primary-care clinic, plus the tooling to know whether it actually works:
 an automated **caller simulator** that phones the agent with real-world edge cases, and a **call review dashboard**.
 
