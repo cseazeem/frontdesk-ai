@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FrontDesk AI</title>
+<style>
+:root { --bg: #f6f6f3; --panel: #fff; --ink: #16181d; --muted: #61656e; --line: #e4e4de; --accent: #c8f031; }
+@media (prefers-color-scheme: dark) { :root { --bg: #111317; --panel: #191c21; --ink: #eceef2; --muted: #9298a3; --line: #2a2e35; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 56px 20px 40px; }
+.tag { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+h1 { font-size: clamp(34px, 7vw, 54px); line-height: 1.02; letter-spacing: -0.035em; margin: 18px 0 14px; }
+h1 mark { background: var(--accent); color: #16181d; padding: 0 8px; border-radius: 6px; }
+p.lead { font-size: 18px; color: var(--muted); margin: 0 0 28px; }
+.cta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 12px; font-weight: 650; text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--panel); }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.hint { font-size: 14px; color: var(--muted); margin-bottom: 36px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 32px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.card b { display: block; margin-bottom: 4px; }
+.card span { color: var(--muted); font-size: 14px; }
+h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
+ul.try { padding-left: 20px; margin: 0 0 28px; }
+ul.try li { margin: 6px 0; }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <span class="tag">Voice AI · Healthcare · Demo</span>
+  <h1>A clinic front desk that <mark>picks up</mark> the phone.</h1>
+  <p class="lead">Ava is a voice agent for a (fictional) US primary-care clinic. She books, reschedules and cancels
+    appointments, verifies identity before sharing anything, and recognises emergencies instead of booking them.</p>
+  <div class="cta">
+    <a class="btn primary" href="/client/">🎙 Talk to Ava</a>
+    <a class="btn" href="/dashboard/">Call review dashboard</a>
+  </div>
+  <p class="hint">Click <b>Connect</b> and allow the microphone. If it stays on "connecting", choose
+    <b>WebSocket</b> in the top-right transport menu and connect again. Calls are limited to 5 minutes.</p>
+
+  <h2>Things to try</h2>
+  <ul class="try">
+    <li>"Hi, I'm Maria Gonzalez, born March 14, 1985. I need a follow-up with Dr. Chen next week, afternoon."</li>
+    <li>"I want to book a check-up. I've had chest pressure since this morning and my arm is tingly."</li>
+    <li>"When is my husband David Kim's physical? His birthday is May 21, 1970."</li>
+    <li>"I'm Kevin Brooks, April 12, 1993. Can you refill my Adderall?"</li>
+    <li>Speak Spanish, or interrupt Ava mid-sentence.</li>
+  </ul>
+
+  <div class="grid">
+    <div class="card"><b>Rules in code, not prompts</b><span>Identity gate, late-cancel fee, refill policy enforced by the backend.</span></div>
+    <div class="card"><b>Safety monitor</b><span>Deterministic emergency detection runs beside the LLM and flags misses.</span></div>
+    <div class="card"><b>Caller simulator</b><span>16 scripted LLM callers with deterministic checks and an LLM judge.</span></div>
+    <div class="card"><b>Every call reviewable</b><span>Redacted transcripts, tool calls, latency and stereo recordings.</span></div>
+  </div>
+
+  <footer>Built with Pipecat + Gemini Live. All patients, staff and data are fictional; please don't share real health information.
+    · <a href="https://github.com/cseazeem/frontdesk-ai">Source on GitHub</a></footer>
+</main>
+</body>
+</html>

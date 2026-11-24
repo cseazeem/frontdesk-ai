@@ -1,0 +1,16 @@
+# Render Blueprint: one web service serving the landing page, the voice client and the dashboard.
+services:
+  - type: web
+    name: frontdesk-ai
+    runtime: python
+    plan: free
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    startCommand: uv run --no-sync bot.py --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: GOOGLE_API_KEY
+        sync: false            # entered by you in the Render dashboard, never committed
+      - key: PIPECAT_ICE_SERVERS
+        value: stun:stun.l.google.com:19302
+      - key: MAX_CALL_SECONDS
+        value: "300"

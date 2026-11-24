@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FrontDesk AI · Call Review</title>
+<style>
+:root {
+  --bg: #f6f6f3; --panel: #ffffff; --ink: #16181d; --muted: #6b6f78; --line: #e4e4de;
+  --accent: #c8f031; --accent-ink: #16181d; --pass: #1f8a4c; --pass-bg: #e3f4ea;
+  --fail: #c0392b; --fail-bg: #fbe7e4; --warn: #9a6700; --warn-bg: #fff4d6;
+  --agent: #16181d; --agent-ink: #fff; --caller: #ecece6; --tool: #f1f5ff; --tool-ink: #2f4a8a;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111317; --panel: #191c21; --ink: #eceef2; --muted: #9298a3; --line: #2a2e35;
+    --pass: #4cc27e; --pass-bg: #163322; --fail: #ff7a6b; --fail-bg: #3a1d1a; --warn: #f0c04a; --warn-bg: #3a3014;
+    --agent: #2b3a10; --agent-ink: #eaf7c8; --caller: #252930; --tool: #1a2337; --tool-ink: #9db8ff;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { display: flex; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; flex-wrap: wrap; }
+.logo { font-weight: 800; letter-spacing: -0.02em; font-size: 17px; }
+.logo span { background: var(--accent); color: var(--accent-ink); padding: 1px 6px; border-radius: 4px; }
+nav { display: flex; gap: 4px; }
+nav button { border: 1px solid var(--line); background: transparent; color: var(--ink); padding: 6px 14px; border-radius: 999px; cursor: pointer; font: inherit; }
+nav button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.spacer { flex: 1; }
+select { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); max-width: 100%; }
+main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.kpi .v { font-size: 28px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kpi .l { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.grid { display: grid; grid-template-columns: minmax(300px, 420px) 1fr; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; } main { padding: 16px; } header { padding: 12px 16px; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.list button { display: flex; width: 100%; gap: 10px; align-items: center; text-align: left; padding: 11px 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: inherit; cursor: pointer; font: inherit; }
+.list button:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.list button.sel { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.list .t { flex: 1; min-width: 0; }
+.list .t b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list .t small { color: var(--muted); }
+.group { padding: 8px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); background: color-mix(in srgb, var(--ink) 3%, transparent); border-bottom: 1px solid var(--line); }
+.pill { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pass { color: var(--pass); background: var(--pass-bg); }
+.fail { color: var(--fail); background: var(--fail-bg); }
+.warn { color: var(--warn); background: var(--warn-bg); }
+.neutral { color: var(--muted); background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.detail { padding: 18px 20px; }
+.detail h2 { margin: 0 0 4px; font-size: 19px; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin-bottom: 14px; }
+.checks { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 6px; }
+.checks li { display: flex; gap: 8px; align-items: baseline; }
+.checks small { color: var(--muted); }
+.judge { border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; }
+.judge .row { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+.judge ul { margin: 6px 0 0; padding-left: 18px; }
+.chat { display: flex; flex-direction: column; gap: 8px; }
+.msg { max-width: 82%; padding: 9px 12px; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg.agent { align-self: flex-start; background: var(--agent); color: var(--agent-ink); border-bottom-left-radius: 4px; }
+.msg.user { align-self: flex-end; background: var(--caller); border-bottom-right-radius: 4px; }
+.msg .who { font-size: 11px; opacity: 0.7; display: block; margin-bottom: 2px; }
+.msg .heard { display: block; font-size: 12px; opacity: 0.7; margin-top: 4px; font-style: italic; }
+.tool { align-self: flex-start; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--tool); color: var(--tool-ink); padding: 6px 10px; border-radius: 8px; max-width: 100%; overflow-wrap: anywhere; }
+.flag { align-self: center; }
+.empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: color-mix(in srgb, var(--ink) 7%, transparent); padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">FrontDesk <span>AI</span></div>
+  <nav>
+    <button id="tab-sim" class="on">Caller simulator</button>
+    <button id="tab-calls">Live calls</button>
+  </nav>
+  <div class="spacer"></div>
+  <select id="runs" aria-label="Simulator run"></select>
+</header>
+<main>
+  <section class="kpis" id="kpis"></section>
+  <section class="grid">
+    <div class="card list" id="list"></div>
+    <div class="card" id="detail"><div class="empty">Select a call to review it.</div></div>
+  </section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pill = (ok, yes = "PASS", no = "FAIL") => `<span class="pill ${ok ? "pass" : "fail"}">${ok ? yes : no}</span>`;
+const kpi = (v, l) => `<div class="kpi"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div></div>`;
+let mode = "sim", run = null;
+
+function renderEvents(events) {
+  return `<div class="chat">` + events.map((e) => {
+    if (e.type === "agent") return e.text ? `<div class="msg agent"><span class="who">Ava</span>${esc(e.text)}</div>` : "";
+    if (e.type === "user") return `<div class="msg user"><span class="who">Caller</span>${esc(e.text)}${e.heardText ? `<span class="heard">agent heard: “${esc(e.heardText)}”</span>` : ""}</div>`;
+    if (e.type === "tool_call") return `<div class="tool">→ ${esc(e.name)}(${esc(JSON.stringify(e.args))})</div>`;
+    if (e.type === "tool_result") return `<div class="tool">← ${esc(JSON.stringify(e.result).slice(0, 260))}</div>`;
+    if (e.type === "flag") return `<div class="flag"><span class="pill ${e.kind === "emergency_escalated" ? "warn" : "fail"}">⚑ ${esc(e.kind)}: ${esc(e.detail)}</span></div>`;
+    return "";
+  }).join("") + `</div>`;
+}
+
+// Simulator transcripts store what the agent "heard" separately for noisy-line callers; merge it in.
+function simEvents(r) {
+  const heard = (r.transcript || []).filter((t) => t.role === "caller");
+  let i = 0;
+  return (r.events || []).map((e) => {
+    if (e.type !== "user") return e;
+    const h = heard[i++];
+    return h && h.heard ? { ...e, heardText: h.heard } : e;
+  });
+}
+
+async function loadRuns() {
+  const runs = await (await fetch("api/sim-runs")).json();
+  $("#runs").innerHTML = runs.map((r) => `<option value="${esc(r.file)}">${esc(r.run_at.replace("T", " "))} · ${r.passed}/${r.total} passed</option>`).join("")
+    || `<option>No simulator runs yet</option>`;
+  if (runs.length) await loadRun(runs[0].file);
+  else { $("#kpis").innerHTML = ""; $("#list").innerHTML = `<div class="empty">Run <code>uv run python -m simulator.run</code></div>`; }
+}
+
+async function loadRun(file) {
+  run = await (await fetch(`api/sim-runs/${file}`)).json();
+  const lat = run.results.map((r) => r.metrics?.avg_words_per_agent_turn).filter(Boolean);
+  $("#kpis").innerHTML = kpi(`${Math.round(run.pass_rate * 100)}%`, "pass rate") + kpi(`${run.passed}/${run.total}`, "calls passed")
+    + kpi(run.avg_voice_style ?? "–", "voice style (1–5)") + kpi(run.avg_empathy ?? "–", "empathy (1–5)")
+    + kpi(lat.length ? (lat.reduce((a, b) => a + b, 0) / lat.length).toFixed(1) : "–", "avg words / agent turn");
+  const order = ["safety", "privacy", "edge_case", "happy_path"];
+  const groups = order.map((c) => [c, run.results.map((r, i) => [r, i]).filter(([r]) => r.category === c)]).filter(([, g]) => g.length);
+  $("#list").innerHTML = groups.map(([c, g]) => `<div class="group">${esc(c.replace("_", " "))}</div>` + g.map(([r, i]) =>
+    `<button data-i="${i}"><div class="t"><b>${esc(r.title)}</b><small>${esc(r.persona)} · ${r.metrics?.turns ?? 0} turns · ${r.metrics?.tool_calls ?? 0} tools</small></div>${pill(r.passed)}</button>`).join("")).join("");
+  $("#list").querySelectorAll("button").forEach((b) => b.onclick = () => showSim(+b.dataset.i, b));
+  const first = $("#list button"); if (first) showSim(+first.dataset.i, first);
+}
+
+function showSim(i, btn) {
+  document.querySelectorAll(".list button").forEach((b) => b.classList.toggle("sel", b === btn));
+  const r = run.results[i], j = r.judge || {};
+  const flags = (k) => j[k] === undefined ? "" : `<span class="pill ${j[k] ? "pass" : "fail"}">${k.replace(/_/g, " ")}</span>`;
+  const html = renderEvents(simEvents(r));
+  $("#detail").innerHTML = `<div class="detail">
+    <h2>${esc(r.title)} ${pill(r.passed)}</h2>
+    <div class="sub">${esc(r.persona)} · outcome <code>${esc(r.outcome || "–")}</code> · ${r.metrics?.avg_words_per_agent_turn ?? "–"} words/turn avg</div>
+    ${r.error ? `<p class="pill fail">${esc(r.error)}</p>` : ""}
+    <ul class="checks">${(r.checks || []).map((c) => `<li>${pill(c.passed, "✓", "✗")} <span>${esc(c.name)} <small>${esc(c.detail)}</small></span></li>`).join("")}</ul>
+    ${j.summary ? `<div class="judge"><b>LLM judge</b> · ${esc(j.summary)}
+      <div class="row">${["safety_ok", "privacy_ok", "no_medical_advice", "language_ok", "resolved"].map(flags).join("")}
+      <span class="pill neutral">voice ${j.voice_style}/5</span><span class="pill neutral">empathy ${j.empathy}/5</span></div>
+      ${(j.issues || []).length ? `<ul>${j.issues.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</div>` : ""}
+    ${html}</div>`;
+}
+
+async function loadCalls() {
+  const calls = await (await fetch("api/calls")).json();
+  const lat = calls.map((c) => c.metrics?.latency_avg).filter(Boolean);
+  const flagged = calls.filter((c) => (c.flags || []).length).length;
+  $("#kpis").innerHTML = kpi(calls.length, "calls") + kpi(flagged, "flagged for review")
+    + kpi(lat.length ? `${(lat.reduce((a, b) => a + b, 0) / lat.length).toFixed(2)}s` : "–", "avg response latency")
+    + kpi(calls.filter((c) => c.outcome === "booked").length, "booked");
+  $("#list").innerHTML = calls.map((c) => {
+    const bad = (c.flags || []).some((f) => f.kind === "missed_emergency");
+    const status = bad ? `<span class="pill fail">REVIEW</span>` : (c.flags || []).length ? `<span class="pill warn">FLAG</span>` : `<span class="pill neutral">${esc(c.outcome)}</span>`;
+    return `<button data-id="${esc(c.id)}"><div class="t"><b>${esc(c.started_at.replace("T", " "))} · ${esc(c.channel)}</b><small>${esc(c.outcome)} · ${c.metrics?.turns ?? 0} turns · ${c.metrics?.latency_avg ? c.metrics.latency_avg.toFixed(2) + "s avg" : "no latency data"}</small></div>${status}</button>`;
+  }).join("") || `<div class="empty">No live calls yet. Run <code>uv run bot.py</code> and talk to Ava.</div>`;
+  $("#list").querySelectorAll("button").forEach((b) => b.onclick = () => showCall(b.dataset.id, b));
+  const first = $("#list button"); if (first) showCall(first.dataset.id, first); else $("#detail").innerHTML = `<div class="empty">Select a call to review it.</div>`;
+}
+
+async function showCall(id, btn) {
+  document.querySelectorAll(".list button").forEach((b) => b.classList.toggle("sel", b === btn));
+  const c = await (await fetch(`api/calls/${id}`)).json();
+  const lats = c.metrics?.latencies || [];
+  $("#detail").innerHTML = `<div class="detail"><h2>Call ${esc(c.id)}</h2>
+    <div class="sub">${esc(c.started_at.replace("T", " "))} · ${esc(c.channel)} · outcome <code>${esc(c.outcome)}</code> · ${c.metrics?.duration_secs ?? "–"}s
+    ${lats.length ? ` · latency avg ${c.metrics.latency_avg}s, p95 ${c.metrics.latency_p95}s` : ""}</div>
+    ${c.metrics?.recording ? `<audio controls preload="none" src="recordings/${esc(c.metrics.recording)}" style="width:100%;margin-bottom:14px"></audio>` : ""}
+    ${(c.flags || []).length ? `<div class="judge">${c.flags.map((f) => `<span class="pill ${f.kind === "missed_emergency" ? "fail" : "warn"}">⚑ ${esc(f.kind)}</span> <small>${esc(f.detail)}</small>`).join("<br>")}</div>` : ""}
+    ${renderEvents(c.events || [])}</div>`;
+}
+
+function setMode(m) {
+  mode = m;
+  $("#tab-sim").classList.toggle("on", m === "sim");
+  $("#tab-calls").classList.toggle("on", m === "calls");
+  $("#runs").style.display = m === "sim" ? "" : "none";
+  $("#detail").innerHTML = `<div class="empty">Select a call to review it.</div>`;
+  m === "sim" ? loadRuns() : loadCalls();
+}
+$("#tab-sim").onclick = () => setMode("sim");
+$("#tab-calls").onclick = () => setMode("calls");
+$("#runs").onchange = (e) => loadRun(e.target.value);
+setMode("sim");
+</script>
+</body>
+</html>
