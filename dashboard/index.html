@@ -156,7 +156,7 @@ function showSim(i, btn) {
 
 async function loadCalls() {
   const calls = await (await fetch("api/calls")).json();
-  const lat = calls.map((c) => c.metrics?.latency_avg).filter(Boolean);
+  const lat = calls.map((c) => c.metrics?.latency_avg).filter((v) => v && v < 15); // older calls may hold idle-tab outliers
   const flagged = calls.filter((c) => (c.flags || []).length).length;
   $("#kpis").innerHTML = kpi(calls.length, "calls") + kpi(flagged, "flagged for review")
     + kpi(lat.length ? `${(lat.reduce((a, b) => a + b, 0) / lat.length).toFixed(2)}s` : "–", "avg response latency")
@@ -164,7 +164,7 @@ async function loadCalls() {
   $("#list").innerHTML = calls.map((c) => {
     const bad = (c.flags || []).some((f) => f.kind === "missed_emergency");
     const status = bad ? `<span class="pill fail">REVIEW</span>` : (c.flags || []).length ? `<span class="pill warn">FLAG</span>` : `<span class="pill neutral">${esc(c.outcome)}</span>`;
-    return `<button data-id="${esc(c.id)}"><div class="t"><b>${esc(c.started_at.replace("T", " "))} · ${esc(c.channel)}</b><small>${esc(c.outcome)} · ${c.metrics?.turns ?? 0} turns · ${c.metrics?.latency_avg ? c.metrics.latency_avg.toFixed(2) + "s avg" : "no latency data"}</small></div>${status}</button>`;
+    return `<button data-id="${esc(c.id)}"><div class="t"><b>${esc(c.started_at.replace("T", " "))} · ${esc(c.channel)}</b><small>${esc(c.outcome)} · ${c.metrics?.turns ?? 0} turns · ${c.metrics?.latency_avg && c.metrics.latency_avg < 15 ? c.metrics.latency_avg.toFixed(2) + "s avg" : "no latency data"}</small></div>${status}</button>`;
   }).join("") || `<div class="empty">No live calls yet. Run <code>uv run bot.py</code> and talk to Ava.</div>`;
   $("#list").querySelectorAll("button").forEach((b) => b.onclick = () => showCall(b.dataset.id, b));
   const first = $("#list button"); if (first) showCall(first.dataset.id, first); else $("#detail").innerHTML = `<div class="empty">Select a call to review it.</div>`;

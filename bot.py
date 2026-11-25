@@ -77,6 +77,7 @@ SAFETY_NUDGE = (
 
 # Public demo guardrail: cap call length so one open tab can't burn the whole API quota.
 MAX_CALL_SECONDS = int(os.getenv("MAX_CALL_SECONDS", "300"))
+MAX_PLAUSIBLE_LATENCY = 15.0  # seconds
 
 transport_params = {
     "webrtc": lambda: TransportParams(audio_in_enabled=True, audio_out_enabled=True),
@@ -161,6 +162,10 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
 
     @latency.event_handler("on_latency_measured")
     async def on_latency(_observer, seconds: float):
+        # A gap this long is not a reply: background noise tripped the local VAD, or the tab sat idle.
+        if seconds > MAX_PLAUSIBLE_LATENCY:
+            logger.warning(f"[{session.call_id}] ignoring implausible latency {seconds:.1f}s")
+            return
         session.metrics["latencies"].append(round(seconds, 3))
         logger.info(f"[{session.call_id}] response latency {seconds:.2f}s")
 
